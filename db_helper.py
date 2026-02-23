@@ -24,23 +24,26 @@ class DB:
             cursor.execute(sql)
             return cursor.fetchall()
 
-    # 데이터 추가 (재고 입력 가능하도록 변경)
     def insert_hotdog(self, name, price, stock, category, kcal):
         with self.conn.cursor() as cursor:
             sql = "INSERT INTO hotdogs (menu_name, price, stock, category, kcal) VALUES (%s, %s, %s, %s, %s)"
             cursor.execute(sql, (name, price, stock, category, kcal))
         self.conn.commit()
 
-    # 🟢 [신규] 데이터 수정
     def update_hotdog(self, hotdog_id, name, price, stock, category, kcal):
         with self.conn.cursor() as cursor:
             sql = "UPDATE hotdogs SET menu_name=%s, price=%s, stock=%s, category=%s, kcal=%s WHERE id=%s"
             cursor.execute(sql, (name, price, stock, category, kcal, hotdog_id))
         self.conn.commit()
 
-    # 🟢 [신규] 데이터 삭제
     def delete_hotdog(self, hotdog_id):
         with self.conn.cursor() as cursor:
             sql = "DELETE FROM hotdogs WHERE id=%s"
             cursor.execute(sql, (hotdog_id,))
+        self.conn.commit()
+
+    def deduct_stock(self, menu_name, qty):
+        with self.conn.cursor() as cursor:
+            sql = "UPDATE hotdogs SET stock = stock - %s WHERE menu_name = %s"
+            cursor.execute(sql, (qty, menu_name))
         self.conn.commit()

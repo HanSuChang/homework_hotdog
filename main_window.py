@@ -3,14 +3,13 @@ from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLa
 from db_helper import DB, DB_CONFIG
 
 
-# 🟢 [신규] 배달앱 스타일 결제창 클래스
+# 🟢 배달앱 스타일 결제창 클래스
 class PaymentDialog(QDialog):
     def __init__(self, total_price, parent=None):
         super().__init__(parent)
         self.setWindowTitle("핫도그의 민족 - 결제하기")
         self.setFixedSize(350, 480)
 
-        # 결제창도 브라운 톤으로 통일
         self.setStyleSheet("""
             QDialog { background-color: #F4EAE0; }
             QLabel { color: #3E2723; font-weight: bold; }
@@ -22,7 +21,6 @@ class PaymentDialog(QDialog):
 
         layout = QVBoxLayout()
 
-        # 1. 배달 주소 입력칸
         layout.addWidget(QLabel("📍 배달 받으실 주소"))
         self.input_address = QLineEdit()
         self.input_address.setPlaceholderText("예: 대전광역시 유성구 핫도그동 123")
@@ -30,25 +28,22 @@ class PaymentDialog(QDialog):
 
         layout.addSpacing(15)
 
-        # 2. 총 결제 금액
         self.total_label = QLabel(f"💰 총 결제 금액: {total_price}원")
         self.total_label.setStyleSheet("font-size: 18px; color: #D84315; margin-bottom: 10px;")
         layout.addWidget(self.total_label)
 
-        # 3. 결제 수단 라디오 버튼 (보내주신 사진 참고)
         layout.addWidget(QLabel("💳 결제수단 선택"))
         self.pay_group = QButtonGroup(self)
-        methods = ["신용/체크카드", "토스페이", "카카오페이", "계좌 결제", "네이버페이", "휴대폰 결제","만나서 결제"]
+        methods = ["신용/체크카드", "토스페이", "카카오페이", "계좌 결제", "네이버페이", "휴대폰 결제"]
 
         for i, m in enumerate(methods):
             rb = QRadioButton(m)
-            if i == 0: rb.setChecked(True)  # 기본으로 첫 번째 선택
+            if i == 0: rb.setChecked(True)
             self.pay_group.addButton(rb)
             layout.addWidget(rb)
 
         layout.addSpacing(20)
 
-        # 4. 최종 결제 버튼
         self.btn_pay = QPushButton(f"{total_price}원 결제하기")
         self.btn_pay.clicked.connect(self.process_payment)
         layout.addWidget(self.btn_pay)
@@ -56,18 +51,13 @@ class PaymentDialog(QDialog):
         self.setLayout(layout)
 
     def process_payment(self):
-        # 주소가 비어있는지 검사
         if not self.input_address.text().strip():
             QMessageBox.warning(self, "알림", "배달 받으실 주소를 정확히 입력해주세요!")
             return
-
-        # 문제 없으면 결제창 닫고 성공 신호 보내기
         self.accept()
 
 
-# =======================================================
-# 아래는 기존 메인 화면 코드입니다. (checkout 함수만 변경됨)
-# =======================================================
+# 🟢 메인 키오스크 화면 클래스
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -93,7 +83,7 @@ class MainWindow(QMainWindow):
 
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["번호", "메뉴명", "가격", "재고", "카테고리", "칼로리(kcal)"])
+        self.table.setHorizontalHeaderLabels(["ID", "메뉴명", "가격", "재고", "카테고리", "칼로리(kcal)"])
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.itemSelectionChanged.connect(self.fill_inputs_from_selection)
@@ -296,7 +286,7 @@ class MainWindow(QMainWindow):
             self.cart_table.setCellWidget(idx, 4, btn_plus)
         self.total_label.setText(f"총 결제 금액: {total_price}원")
 
-    # 🟢 [신규] 결제하기 버튼을 눌렀을 때 실행되는 함수 (새 결제창 연결)
+    # 이 부분이 빠져서 에러가 났던 겁니다!
     def checkout(self):
         if not self.cart_items:
             QMessageBox.warning(self, "알림", "장바구니가 비어있습니다.")
@@ -304,13 +294,17 @@ class MainWindow(QMainWindow):
 
         total_price = sum(info['price'] * info['qty'] for info in self.cart_items.values())
 
-        # 새로 만든 결제창 띄우기
         dialog = PaymentDialog(total_price, self)
 
-        # 결제창에서 '결제하기'를 성공적으로 누른 경우 (주소까지 잘 입력하고)
         if dialog.exec_() == QDialog.Accepted:
             address = dialog.input_address.text().strip()
+
+            # DB 재고 깎기 기능
+            for menu_name, info in self.cart_items.items():
+                self.db.deduct_stock(menu_name, info['qty'])
+
             QMessageBox.information(self, "주문 접수 완료", f"결제가 완료되었습니다!\n[{address}]로 맛있게 배달해 드릴게요 🛵")
 
             self.cart_items.clear()
             self.update_cart_ui()
+            self.load_data()
