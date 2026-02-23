@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout, QWidget, QLabel, \
-    QPushButton, QMessageBox, QAbstractItemView, QLineEdit, QDialog, QRadioButton, QButtonGroup
+    QPushButton, QMessageBox, QAbstractItemView, QLineEdit, QDialog, QRadioButton, QButtonGroup, QHeaderView
 from db_helper import DB, DB_CONFIG
 
 
-# 🟢 배달앱 스타일 결제창 클래스
 class PaymentDialog(QDialog):
     def __init__(self, total_price, parent=None):
         super().__init__(parent)
@@ -57,7 +56,6 @@ class PaymentDialog(QDialog):
         self.accept()
 
 
-# 🟢 메인 키오스크 화면 클래스
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -77,6 +75,7 @@ class MainWindow(QMainWindow):
 
         main_layout = QHBoxLayout()
 
+        # ================= [왼쪽: 메뉴판 & 데이터 관리] =================
         left_layout = QVBoxLayout()
         self.label = QLabel("🌭 명량핫도그 재고/메뉴 관리")
         self.label.setStyleSheet("font-size: 20px; font-weight: bold; margin: 10px; background: transparent;")
@@ -87,6 +86,9 @@ class MainWindow(QMainWindow):
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.itemSelectionChanged.connect(self.fill_inputs_from_selection)
+
+        # 🟢 [신규 추가] 창 크기에 맞춰 표의 모든 칸을 꽉 차게 늘립니다.
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         self.btn_add_cart = QPushButton("장바구니에 담기 ➡️")
         self.btn_add_cart.setMinimumHeight(40)
@@ -133,6 +135,7 @@ class MainWindow(QMainWindow):
         left_layout.addLayout(input_layout)
         left_layout.addLayout(btn_layout)
 
+        # ================= [오른쪽: 장바구니] =================
         right_layout = QVBoxLayout()
         self.cart_label = QLabel("🛒 장바구니")
         self.cart_label.setStyleSheet("font-size: 20px; font-weight: bold; margin: 10px; background: transparent;")
@@ -142,7 +145,8 @@ class MainWindow(QMainWindow):
         self.cart_table.setHorizontalHeaderLabels(["메뉴명", "가격", "-", "수량", "+"])
         self.cart_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        self.cart_table.setColumnWidth(0, 130)
+        # 🟢 [신규 추가] 장바구니는 '메뉴명(0번째 칸)'만 길게 꽉 차게 늘립니다. (나머지는 고정 크기 유지)
+        self.cart_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.cart_table.setColumnWidth(1, 70)
         self.cart_table.setColumnWidth(2, 30)
         self.cart_table.setColumnWidth(3, 40)
@@ -171,6 +175,7 @@ class MainWindow(QMainWindow):
         self.cart_items = {}
         self.load_data()
 
+    # --- 이하 데이터 처리 함수들 ---
     def load_data(self):
         data = self.db.fetch_hotdogs()
         self.table.setRowCount(len(data))
@@ -286,7 +291,6 @@ class MainWindow(QMainWindow):
             self.cart_table.setCellWidget(idx, 4, btn_plus)
         self.total_label.setText(f"총 결제 금액: {total_price}원")
 
-    # 이 부분이 빠져서 에러가 났던 겁니다!
     def checkout(self):
         if not self.cart_items:
             QMessageBox.warning(self, "알림", "장바구니가 비어있습니다.")
@@ -299,7 +303,6 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             address = dialog.input_address.text().strip()
 
-            # DB 재고 깎기 기능
             for menu_name, info in self.cart_items.items():
                 self.db.deduct_stock(menu_name, info['qty'])
 
