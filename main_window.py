@@ -10,12 +10,12 @@ class PaymentDialog(QDialog):
         self.setFixedSize(350, 480)
 
         self.setStyleSheet("""
-            QDialog { background-color: #F4EAE0; }
-            QLabel { color: #3E2723; font-weight: bold; }
-            QLineEdit { border: 1px solid #BCAAA4; padding: 10px; background-color: #FFFFFF; border-radius: 5px; }
-            QRadioButton { font-size: 14px; margin: 6px; color: #3E2723; }
-            QPushButton { background-color: #D84315; color: white; font-weight: bold; border-radius: 5px; padding: 12px; font-size: 16px; }
-            QPushButton:hover { background-color: #BF360C; }
+            QDialog { background-color: #FFFFFF; }
+            QLabel { color: #000000; font-weight: bold; }
+            QLineEdit { border: 1px solid #CCCCCC; padding: 10px; background-color: #FFFFFF; border-radius: 5px; color: #000000; }
+            QRadioButton { font-size: 14px; margin: 6px; color: #000000; }
+            QPushButton { background-color: #EEEEEE; color: #000000; font-weight: bold; border-radius: 5px; border: 1px solid #CCCCCC; padding: 12px; font-size: 16px; }
+            QPushButton:hover { background-color: #DDDDDD; }
         """)
 
         layout = QVBoxLayout()
@@ -64,18 +64,17 @@ class MainWindow(QMainWindow):
         self.db = DB(**DB_CONFIG)
 
         self.setStyleSheet("""
-            QMainWindow { background-color: #F4EAE0; }
-            QLabel { color: #3E2723; }
-            QTableWidget { background-color: #FFFFFF; border: 1px solid #BCAAA4; gridline-color: #D7CCC8; }
-            QHeaderView::section { background-color: #8D6E63; color: white; font-weight: bold; padding: 4px; border: 1px solid #795548; }
-            QPushButton { background-color: #FFB300; color: #3E2723; font-weight: bold; border-radius: 4px; padding: 8px; }
-            QPushButton:hover { background-color: #FFA000; }
-            QLineEdit { border: 1px solid #BCAAA4; padding: 5px; background-color: #FFFFFF; }
+            QMainWindow { background-color: #FFFFFF; }
+            QLabel { color: #000000; }
+            QTableWidget { background-color: #FFFFFF; border: 1px solid #CCCCCC; gridline-color: #EEEEEE; color: #000000; }
+            QHeaderView::section { background-color: #F8F8F8; color: #000000; font-weight: bold; padding: 4px; border: 1px solid #CCCCCC; }
+            QPushButton { background-color: #F8F8F8; color: #000000; font-weight: bold; border-radius: 4px; border: 1px solid #CCCCCC; padding: 8px; }
+            QPushButton:hover { background-color: #E8E8E8; }
+            QLineEdit { border: 1px solid #CCCCCC; padding: 5px; background-color: #FFFFFF; color: #000000; }
         """)
 
         main_layout = QHBoxLayout()
 
-        # ================= [왼쪽: 메뉴판 & 데이터 관리] =================
         left_layout = QVBoxLayout()
         self.label = QLabel("🌭 명량핫도그 재고/메뉴 관리")
         self.label.setStyleSheet("font-size: 20px; font-weight: bold; margin: 10px; background: transparent;")
@@ -87,7 +86,6 @@ class MainWindow(QMainWindow):
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.itemSelectionChanged.connect(self.fill_inputs_from_selection)
 
-        # 🟢 [신규 추가] 창 크기에 맞춰 표의 모든 칸을 꽉 차게 늘립니다.
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         self.btn_add_cart = QPushButton("장바구니에 담기 ➡️")
@@ -135,7 +133,6 @@ class MainWindow(QMainWindow):
         left_layout.addLayout(input_layout)
         left_layout.addLayout(btn_layout)
 
-        # ================= [오른쪽: 장바구니] =================
         right_layout = QVBoxLayout()
         self.cart_label = QLabel("🛒 장바구니")
         self.cart_label.setStyleSheet("font-size: 20px; font-weight: bold; margin: 10px; background: transparent;")
@@ -145,7 +142,6 @@ class MainWindow(QMainWindow):
         self.cart_table.setHorizontalHeaderLabels(["메뉴명", "가격", "-", "수량", "+"])
         self.cart_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        # 🟢 [신규 추가] 장바구니는 '메뉴명(0번째 칸)'만 길게 꽉 차게 늘립니다. (나머지는 고정 크기 유지)
         self.cart_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.cart_table.setColumnWidth(1, 70)
         self.cart_table.setColumnWidth(2, 30)
@@ -175,7 +171,6 @@ class MainWindow(QMainWindow):
         self.cart_items = {}
         self.load_data()
 
-    # --- 이하 데이터 처리 함수들 ---
     def load_data(self):
         data = self.db.fetch_hotdogs()
         self.table.setRowCount(len(data))
